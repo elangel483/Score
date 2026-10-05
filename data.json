@@ -1,4 +1,9 @@
-{
- "players": [],
- "rounds": []
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /tournament/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == "여기에_관리자_UID";
+    }
+  }
 }
