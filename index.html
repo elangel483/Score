@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>사내 스크린 골프 대회</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f7f4;--card:#fff;--tx:#1d2a22;--mu:#6b7a70;--ac:#1f7a4d;--ln:#e1e6e0;--gold:#c8961a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a15;--card:#1b2620;--tx:#e8efe9;--mu:#92a398;--ac:#4cc68a;--ln:#2b3a31;--gold:#e6b93c}}
+:root[data-theme="dark"]{--bg:#121a15;--card:#1b2620;--tx:#e8efe9;--mu:#92a398;--ac:#4cc68a;--ln:#2b3a31;--gold:#e6b93c}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 12px}h2{font-size:15px;margin:0 0 8px;color:var(--mu);font-weight:600}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:14px;margin-bottom:12px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button,.btn{border:1px solid var(--ln);background:var(--card);color:var(--tx);padding:8px 12px;border-radius:8px;font:inherit;cursor:pointer}
+.tabs button{flex:1}.tabs button.on,.btn.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+input,select{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:7px 8px;max-width:100%}
+input[type=number]{width:80px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.award{display:flex;gap:10px}.award>div{flex:1;text-align:center}.award b{display:block;font-size:18px;color:var(--gold)}
+.sc{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--ln);white-space:nowrap}
+th{color:var(--mu);font-weight:600;font-size:13px}td.n{text-align:left}.top td{font-weight:700}
+.mu{color:var(--mu);font-size:13px}.warn{background:#fff4d6;color:#6a4b00;border-radius:8px;padding:8px;margin-bottom:12px;font-size:13px}
+.chip{display:inline-block;background:var(--bg);border:1px solid var(--ln);border-radius:99px;padding:3px 10px;margin:3px 4px 3px 0}
+.chip i{cursor:pointer;margin-left:6px;color:var(--mu);font-style:normal}
+</style></head><body><main>
+<h1>⛳ 사내 스크린 골프 대회</h1>
+<div id="app"><p class="mu">불러오는 중…</p></div>
+</main>
+<script>
+let S={players:[],rounds:[]},month=new Date().toISOString().slice(0,7),mode="sum";
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function months(){const m=new Set([month]);S.rounds.forEach(r=>m.add(r.date.slice(0,7)));return [...m].sort().reverse()}
+function rank(){const rs=S.rounds.filter(r=>r.date.startsWith(month));
+ const rows=S.players.map(p=>{const v=rs.map(r=>r.scores[p]).filter(x=>x>0);const sum=v.reduce((a,b)=>a+b,0);return{p,n:v.length,sum,avg:v.length?sum/v.length:0}}).filter(x=>x.n);
+ rows.sort((a,b)=>mode==="sum"?(a.sum-b.sum):(a.avg-b.avg));
+ let L=null,N=null;rs.forEach(r=>{if(r.long&&r.long.p&&(!L||r.long.m>L.m))L={...r.long,d:r.date};if(r.near&&r.near.p&&r.near.m>=0&&(!N||r.near.m<N.m))N={...r.near,d:r.date}});
+ return{rows,rs,L,N}}
+function mSel(){return `<select onchange="month=this.value;render()">${months().map(m=>`<option ${m===month?"selected":""}>${m}</option>`).join("")}</select>`}
+function vRank(){const{rows,rs,L,N}=rank();
+ return `<div class="row" style="margin-bottom:12px">${mSel()}<select onchange="mode=this.value;render()"><option value="sum" ${mode==="sum"?"selected":""}>합산 타수</option><option value="avg" ${mode==="avg"?"selected":""}>평균 타수</option></select><span class="mu">${rs.length}경기 진행</span></div>
+ <div class="card"><h2>🏅 이달의 시상</h2><div class="award"><div><span class="mu">롱기스트</span><b>${L?esc(L.p):"-"}</b><span class="mu">${L?L.m+"m · "+L.d.slice(5):""}</span></div><div><span class="mu">니어</span><b>${N?esc(N.p):"-"}</b><span class="mu">${N?N.m+"m · "+N.d.slice(5):""}</span></div></div></div>
+ <div class="card sc"><h2>월간 순위</h2>${rows.length?`<table><tr><th>순위</th><th>이름</th><th>경기</th><th>합계</th><th>평균</th></tr>${rows.map((r,i)=>`<tr class="${i<3?"top":""}"><td>${["🥇","🥈","🥉"][i]||i+1}</td><td class="n">${esc(r.p)}</td><td>${r.n}</td><td>${r.sum}</td><td>${r.avg.toFixed(1)}</td></tr>`).join("")}</table>`:'<p class="mu">아직 입력된 경기가 없습니다.</p>'}</div>
+ <div class="card sc"><h2>주차별 기록</h2>${rs.length?`<table><tr><th>날짜</th>${S.players.map(p=>`<th>${esc(p)}</th>`).join("")}</tr>${[...rs].sort((a,b)=>a.date<b.date?-1:1).map(r=>`<tr><td>${r.date.slice(5)}${r.course?`<br><span class="mu">${esc(r.course)}</span>`:""}</td>${S.players.map(p=>`<td>${r.scores[p]||"-"}</td>`).join("")}</tr>`).join("")}</table>`:'<p class="mu">-</p>'}</div>`}
+function render(){$("#app").innerHTML=vRank()}
+fetch("data.json?t="+Date.now()).then(r=>r.json()).then(d=>{S={players:d.players||[],rounds:d.rounds||[]};if(S.rounds.length){const m=S.rounds.map(r=>r.date.slice(0,7)).sort();month=m[m.length-1]}render()}).catch(()=>{$("#app").innerHTML='<div class="card">data.json을 불러오지 못했습니다. GitHub Pages 주소로 열어주세요.</div>'});
+</script></body></html>
